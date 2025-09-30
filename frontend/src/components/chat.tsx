@@ -87,7 +87,7 @@ export default function ChatBox({ role }: { role: "student" | "teacher" }) {
 
 
   return (
-    <div className="max-w-sm w-80 md:w-full absolute right-[5%] bottom-[10%] md:bottom-[5%] rounded-md   bg-white overflow-hidden">
+    <div className="max-w-sm w-80 md:w-full absolute z-10 right-[5%] bottom-[10%] md:bottom-[5%] rounded-md   bg-white overflow-hidden">
       <div
         className={`${
           showchat ? "block" : "hidden"
