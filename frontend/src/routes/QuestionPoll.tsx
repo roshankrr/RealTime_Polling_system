@@ -49,7 +49,7 @@ export default function QuestionPollPage() {
   const fetchPollHistory = async () => {
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-      const response = await fetch(`${API_URL}/api/polls/history`);
+      const response = await fetch(`${API_URL}/api/polls/history`,{cache: 'no-store'});
       if (response.ok) {
         const result = await response.json();
         
