@@ -69,7 +69,7 @@ export default function QuestionPollPage() {
             totalVotes: poll.options.reduce((sum: number, opt: any) => sum + opt.votes, 0),
             createdAt: poll.createdAt
           }));
-          setPollHistory(transformedHistory.splice(0, 5)); // Keep only last 5 polls
+          setPollHistory(transformedHistory.splice(0, 5).reverse()); // Keep only last 5 polls
           console.log('Poll history fetched:', transformedHistory);
         } else {
           console.error('Backend returned error:', result.message);
