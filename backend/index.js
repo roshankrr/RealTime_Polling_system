@@ -43,7 +43,7 @@ const io = new Server(server, {
 // API endpoint to get poll history
 app.get('/api/polls/history', async (req, res) => {
     try {
-        const polls = await Poll.find().sort({ createdAt: -1 });
+        const polls = await Poll.find().sort({ createdAt: -1 }).limit(10);
         res.json({
             success: true,
             data: polls,

@@ -52,7 +52,7 @@ export default function QuestionPollPage() {
       const response = await fetch(`${API_URL}/api/polls/history`,{cache: 'no-store'});
       if (response.ok) {
         const result = await response.json();
-        console.log('Fetched poll history:', result);
+        // console.log('Fetched poll history:', result);
         
         
         // Handle the backend response structure: { success: true, data: [...], message: "..." }
@@ -70,7 +70,7 @@ export default function QuestionPollPage() {
             createdAt: poll.createdAt
           }));
           setPollHistory(transformedHistory.splice(0, 5).reverse()); // Keep only last 5 polls
-          console.log('Poll history fetched:', transformedHistory);
+        //   console.log('Poll history fetched:', transformedHistory);
         } else {
           console.error('Backend returned error:', result.message);
         }
@@ -256,7 +256,12 @@ export default function QuestionPollPage() {
       {/* Ask New Question */}
       {userRole === "teacher" && (
         <button
-          className="mt-8 rounded-full px-12 py-4 bg-gradient-to-r from-violet-500 to-violet-600 text-white text-lg font-semibold shadow-md hover:to-violet-700 transition"
+          disabled={isPollActive && !!mockPoll.question}
+          className={`mt-8 rounded-full px-12 py-4 ${
+            isPollActive && !!mockPoll.question
+              ? "bg-gradient-to-r from-violet-400 to-violet-500 opacity-50 hover:cursor-not-allowed"
+              : "bg-gradient-to-r from-violet-500 to-violet-600"
+          } text-white text-lg font-semibold shadow-md hover:to-violet-700 transition`}
           onClick={() => navigate("/create-poll")}
         >
           + Ask a new question

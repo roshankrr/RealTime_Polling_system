@@ -150,7 +150,7 @@ export default function PollCreator() {
       </div>
 
       {/* Bottom fixed button */}
-      <div className="w-full h-20 mt-32  left-0 bottom-0 bg-white flex justify-end items-center px-10 py-5 border-t z-10">
+      <div className="w-full h-30 mt-10  left-0 bottom-0  flex justify-end items-center px-10 py-8 border-t border-gray-300 z-10">
         <button
           className="rounded-full px-10 py-2 md:px-14 md:py-4 text-white font-semibold text-md md:text-lg bg-gradient-to-r from-violet-500 to-violet-700 hover:from-violet-700 hover:to-violet-500 transition"
             onClick={handleSubmit}

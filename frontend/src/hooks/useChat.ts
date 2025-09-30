@@ -11,13 +11,13 @@ export const useChat = (userName?: string) => {
   useEffect(() => {
     // Subscribe to message updates
     const unsubscribe = chatService.onMessagesUpdate((newMessages) => {
-      console.log('Chat messages updated:', newMessages);
+    //   console.log('Chat messages updated:', newMessages);
       setMessages(newMessages);
       setIsLoading(false);
     });
 
     // Request chat history when component mounts
-    console.log('Requesting chat history...');
+    // console.log('Requesting chat history...');
     chatService.requestChatHistory();
 
     // Quick fallback to stop loading after 1.5 seconds
