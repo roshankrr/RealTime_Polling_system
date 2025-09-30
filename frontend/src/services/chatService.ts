@@ -51,6 +51,13 @@ export class ChatService {
       this.notifyListeners();
     });
 
+    // Listen for chat cleared event
+    this.socket.on('chatCleared', (data: any) => {
+      console.log('Chat cleared:', data);
+      this.messages = [];
+      this.notifyListeners();
+    });
+
     // Handle case where server doesn't respond to getChatHistory
     this.socket.on('connect', () => {
       console.log('Socket connected, chat service ready');
@@ -81,6 +88,14 @@ export class ChatService {
         this.notifyListeners();
       }
     }, 1000);
+  }
+
+  // Clear chat history (teachers only)
+  clearChatHistory(teacherName: string): void {
+    console.log('Requesting chat history clear...');
+    this.socket.emit('clearChatHistory', {
+      requestedBy: teacherName
+    });
   }
 
   // Subscribe to message updates
@@ -115,6 +130,7 @@ export class ChatService {
   cleanup(): void {
     this.socket.off('newChatMessage');
     this.socket.off('chatHistory');
+    this.socket.off('chatCleared');
     this.messageListeners = [];
   }
 }

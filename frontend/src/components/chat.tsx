@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useRef } from "react";
 import { socketContext } from "../App";
 import { useNavigate } from "react-router-dom";
 import { useChat } from "../hooks/useChat";
@@ -17,9 +17,21 @@ export default function ChatBox({ role }: { role: "student" | "teacher" }) {
   const [currentMessage, setCurrentMessage] = useState("");
   const [userName, setUserName] = useState(role === "teacher" ? "Teacher" : "");
   const [hasSetName, setHasSetName] = useState(role === "teacher");
+  
+  // Ref for auto-scrolling chat messages
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Use the chat hook
-  const { messages: chatMessages, sendMessage, isLoading } = useChat(hasSetName ? userName : "");
+  const { messages: chatMessages, sendMessage, clearChatHistory, isLoading } = useChat(hasSetName ? userName : "");
+
+  // Auto-scroll to bottom when new messages arrive
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [chatMessages]); // Trigger when chatMessages change
 
   useEffect(() => {
     // Request participants list when component mounts
@@ -43,7 +55,7 @@ export default function ChatBox({ role }: { role: "student" | "teacher" }) {
     // Listen for being kicked (students only)
     socket.on("kicked", (data: { message: string; kickedBy: string }) => {
       console.log('You have been kicked:', data);
-      alert(data.message);
+      // alert(data.message);
       navigate('/kicked'); // Redirect to kicked page
     });
 
@@ -66,6 +78,8 @@ export default function ChatBox({ role }: { role: "student" | "teacher" }) {
     if (currentMessage.trim() && hasSetName) {
       sendMessage(currentMessage);
       setCurrentMessage("");
+      // Auto-scroll after sending message
+      setTimeout(scrollToBottom, 100); // Small delay to ensure message is rendered
     }
   };
 
@@ -82,6 +96,12 @@ export default function ChatBox({ role }: { role: "student" | "teacher" }) {
       } else {
         handleSendMessage();
       }
+    }
+  };
+
+  const handleClearChat = () => {
+    if (window.confirm('Are you sure you want to clear all chat messages? This action cannot be undone.')) {
+      clearChatHistory();
     }
   };
 
@@ -118,9 +138,23 @@ export default function ChatBox({ role }: { role: "student" | "teacher" }) {
         </div>
 
         {/* Tab Content */}
-        <div className="p-4 min-h-[320px] max-h-[340px] overflow-y-auto bg-white relative">
+        <div className="px-5 min-h-[320px] max-h-[340px] overflow-y-auto bg-white relative">
           {tab === "chat" ? (
-            <div className="space-y-3 h-full flex flex-col">
+            <div className="space-y-3 relative  h-full flex flex-col">
+              {/* Chat header with clear button for teachers */}
+              {role === "teacher" && hasSetName && chatMessages.length > 0 && (
+                <div className="flex  sticky top-0 bg-white  justify-between items-center py-2 border-b border-gray-100">
+                  <span className="text-xs text-gray-500">Chat Messages</span>
+                  <button
+                    onClick={handleClearChat}
+                    className="text-xs bg-red-100  hover:bg-red-200 text-red-600 px-2 py-1 rounded-md transition-colors"
+                    title="Clear all chat messages"
+                  >
+                    Clear Chat
+                  </button>
+                </div>
+              )}
+              
               {/* Messages container */}
               <div className="flex-1 space-y-3 overflow-y-auto">
                 {!hasSetName && role === "student" ? (
@@ -178,6 +212,8 @@ export default function ChatBox({ role }: { role: "student" | "teacher" }) {
                     </div>
                   ))
                 )}
+                {/* Auto-scroll anchor */}
+                <div ref={messagesEndRef} />
               </div>
             </div>
           ) : (

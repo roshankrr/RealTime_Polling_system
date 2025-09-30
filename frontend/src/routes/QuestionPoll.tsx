@@ -52,6 +52,8 @@ export default function QuestionPollPage() {
       const response = await fetch(`${API_URL}/api/polls/history`,{cache: 'no-store'});
       if (response.ok) {
         const result = await response.json();
+        console.log('Fetched poll history:', result);
+        
         
         // Handle the backend response structure: { success: true, data: [...], message: "..." }
         if (result.success && result.data) {
@@ -67,7 +69,7 @@ export default function QuestionPollPage() {
             totalVotes: poll.options.reduce((sum: number, opt: any) => sum + opt.votes, 0),
             createdAt: poll.createdAt
           }));
-          setPollHistory(transformedHistory.reverse().splice(0, 5)); // Keep only last 5 polls
+          setPollHistory(transformedHistory.splice(0, 5)); // Keep only last 5 polls
           console.log('Poll history fetched:', transformedHistory);
         } else {
           console.error('Backend returned error:', result.message);
@@ -180,13 +182,11 @@ export default function QuestionPollPage() {
 
       {/* Poll box */}
       {(mockPoll.question) ?  (
-        <div>
+        <div >
           <div className="w-full max-w-xl flex flex-col items-start">
-            <div className="flex items-center w-full justify-between mb-6">
-              <h2 className="text-2xl font-semibold">Question</h2>
-              {userRole === "teacher" && (
+            {userRole === "teacher" && (
                 <button
-                  className="text-violet-700 underline font-medium text-sm hover:text-violet-900"
+                  className="text-white absolute top-4 right-4 bg-violet-600 px-4 py-2 rounded-full font-medium text-sm hover:bg-violet-400"
                   onClick={() => {
                     if (!showHistory) {
                       fetchPollHistory();
@@ -197,7 +197,11 @@ export default function QuestionPollPage() {
                   {showHistory ? "Hide Poll History" : "View Poll History"}
                 </button>
               )}
-              {userRole === "student" && (
+            <div className="flex items-center w-full justify-between mb-6">
+                
+              <h2 className="text-2xl font-semibold">Question</h2>
+              
+              {/* {userRole === "student" && ( */}
                 <div
                   className={`text-gray-500 flex items-center font-medium text-sm ${
                     timer <= 15
@@ -210,18 +214,18 @@ export default function QuestionPollPage() {
                   <TimerIcon className="text-md" />
                   {timer > 0 ? `Time left: ${timer}s` : "Poll Ended"}
                 </div>
-              )}
+              {/* )} */}
             </div>
         {/* History Modal/Section */}
         {showHistory && userRole === "teacher" && (
-          <div className="w-full mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
+          <div className="md:w-[30vw]  mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
             {pollHistory.length === 0 ? (
               <div className="text-center text-gray-500 py-4">
                 No poll history available yet.
               </div>
             ) : (
               pollHistory.map((poll: any, idx: number) => (
-                <div key={idx} className="mb-4 last:mb-0">
+                <div key={idx} className="mb-4  last:mb-0">
                   <Question
                     mockPoll={poll}
                     userRole={userRole}

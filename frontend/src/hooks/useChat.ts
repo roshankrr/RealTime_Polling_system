@@ -45,9 +45,16 @@ export const useChat = (userName?: string) => {
     }
   };
 
+  const clearChatHistory = () => {
+    if (userName) {
+      chatService.clearChatHistory(userName);
+    }
+  };
+
   return {
     messages,
     sendMessage,
+    clearChatHistory,
     isLoading
   };
 };

@@ -43,7 +43,7 @@ const io = new Server(server, {
 // API endpoint to get poll history
 app.get('/api/polls/history', async (req, res) => {
     try {
-        const polls = await Poll.find().sort({ createdAt: -1 }).limit(50);
+        const polls = await Poll.find().sort({ createdAt: -1 });
         res.json({
             success: true,
             data: polls,
@@ -175,6 +175,23 @@ io.on('connection', (socket) => {
     socket.on('getChatHistory', () => {
         console.log('Client requesting chat history, sending:', chatMessages.length, 'messages');
         socket.emit('chatHistory', chatMessages);
+    });
+
+    // Clear chat history (teachers only)
+    socket.on('clearChatHistory', (data) => {
+        console.log('Chat history clear requested by:', data.requestedBy);
+        
+        // Clear the messages array
+        chatMessages.length = 0;
+        
+        // Broadcast to all clients that chat has been cleared
+        io.emit('chatCleared', {
+            message: 'Chat history has been cleared by the teacher',
+            clearedBy: data.requestedBy,
+            timestamp: new Date().toISOString()
+        });
+        
+        console.log('Chat history cleared and broadcasted to all clients');
     });
 
     // Handle kick participant (teacher only)
