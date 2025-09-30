@@ -3,15 +3,35 @@ import http from 'http';
 import { Server } from 'socket.io';
 import dotenv from 'dotenv';
 dotenv.config();
-// import cors from 'cors';    
+import cors from 'cors';    
 const app = express();
 const server = http.createServer(app);
 
-const io = new Server(server,{
-    cors: {
-      origin: [process.env.CLIENT_URL, "http://localhost:5173","https://real-time-polling-system-kappa.vercel.app/"],
-    //   credentials: true
-    }
+
+
+const allowedOrigins = [
+  'https://real-time-polling-system-kappa.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000'
+];
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true
+}));
+
+// FOR SOCKET.IO:
+const io = new Server(server, {
+  cors: {
+    origin: function(origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    methods: ["GET", "POST"],
+    credentials: true
+  }
 });
 
 server.listen(process.env.PORT || 3000, () => {
