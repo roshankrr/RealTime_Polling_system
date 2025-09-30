@@ -48,7 +48,7 @@ export default function QuestionPollPage() {
   // Function to fetch poll history from backend
   const fetchPollHistory = async () => {
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const API_URL = import.meta.env.VITE_REACT_APP_SOCKET_URL || 'http://localhost:3000';
       const response = await fetch(`${API_URL}/api/polls/history`,{cache: 'no-store'});
       if (response.ok) {
         const result = await response.json();
