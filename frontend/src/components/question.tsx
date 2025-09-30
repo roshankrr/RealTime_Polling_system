@@ -6,7 +6,7 @@ const Question = ({
   userRole,
   questionId
 }: {
-  mockPoll: { question: string; options: { label: string; votes: number }[] };
+  mockPoll: { question: string; options: { label: string; votes: number; isCorrect?: boolean }[] };
   onVote?: (optionIndex: number) => void;
   userRole: 'student' | 'teacher';
   questionId?: string;
@@ -50,14 +50,16 @@ const Question = ({
                   ? 'cursor-pointer hover:bg-gray-50 rounded-lg' 
                   : ''
               } ${
-                selectedOption === idx ? 'ring-2 ring-violet-400' : ''
+                selectedOption === idx ? '' : ''
               }`}
               onClick={() => handleOptionClick(idx)}
             >
               {/* Option Number circle */}
               <div className={`z-10 flex items-center justify-center w-7 h-7 rounded-full font-bold mr-3 ${
-                selectedOption === idx 
+                selectedOption === idx && opt.isCorrect
                   ? 'bg-green-500 text-white' 
+                  : selectedOption === idx && !opt.isCorrect
+                  ? 'bg-red-500 text-white'
                   : 'bg-[#6766D5] text-white'
               }`}>
                 {selectedOption === idx ? '✓' : idx + 1}
@@ -69,7 +71,11 @@ const Question = ({
                     className={`rounded-lg transition-all duration-500 h-12`}
                     style={{
                       width: `${getPercent(opt.votes)}%`,
-                      background: selectedOption === idx ? '#10B981' : '#6766D5',
+                      background: selectedOption === idx && opt.isCorrect 
+                        ? '#10B981' 
+                        : selectedOption === idx && !opt.isCorrect
+                        ? '#EF4444'
+                        : '#6766D5',
                       opacity: 0.85,
                     }}
                   />
@@ -85,9 +91,15 @@ const Question = ({
               </div>
             </div>
           ))}
-          {userRole === 'student' && hasVoted && (
-            <div className="text-center text-green-600 font-medium mt-4">
-              ✓ Your vote has been submitted!
+          {userRole === 'student' && hasVoted && selectedOption !== null && (
+            <div className={`text-center font-medium mt-4 ${
+              mockPoll.options[selectedOption]?.isCorrect 
+                ? 'text-green-600' 
+                : 'text-red-600'
+            }`}>
+              {mockPoll.options[selectedOption]?.isCorrect 
+                ? '✓ Correct! Your vote has been submitted!' 
+                : '✗ Incorrect answer. Your vote has been submitted!'}
             </div>
           )}
         </div>

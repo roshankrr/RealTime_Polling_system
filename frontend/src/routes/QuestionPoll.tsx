@@ -20,7 +20,7 @@ export default function QuestionPollPage() {
   const [mockPoll, setMockPoll] = useState(
     {} as {
       question: string;
-      options: { label: string; votes: number }[];
+      options: { label: string; votes: number; isCorrect: boolean }[];
       duration: number;
     }
   );
@@ -33,7 +33,7 @@ export default function QuestionPollPage() {
       console.log('Poll inactive - starting 1 minute cleanup timer');
       inactivityTimer = window.setTimeout(() => {
         console.log('Clearing poll after 1 minute of inactivity');
-        setMockPoll({} as { question: string; options: { label: string; votes: number }[], duration: number });
+        setMockPoll({} as { question: string; options: { label: string; votes: number; isCorrect: boolean }[], duration: number });
         setQuestionId('');
       }, 60000); // 1 minute = 60000ms
     }
@@ -88,15 +88,16 @@ export default function QuestionPollPage() {
       "newQuestion",
       (data: {
         question: string;
-        options: { value: string; votes: number }[];
+        options: { value: string; votes: number; isCorrect: boolean }[];
         duration: number;
       }) => {
-        // Transform options format from backend to frontend
+        // Transform options format from backend to frontend, preserving isCorrect
         const transformedData = {
           question: data.question,
           options: data.options.map((opt) => ({
             label: opt.value,
             votes: opt.votes,
+            isCorrect: opt.isCorrect, // Preserve the correct answer information
           })),
           duration: data.duration,
         };
@@ -135,7 +136,7 @@ export default function QuestionPollPage() {
       "voteUpdate",
       (updatedPoll: {
         question: string;
-        options: { value: string; votes: number }[];
+        options: { value: string; votes: number; isCorrect: boolean }[];
         duration: number;
       }) => {
         const transformedData = {
@@ -143,6 +144,7 @@ export default function QuestionPollPage() {
           options: updatedPoll.options.map((opt) => ({
             label: opt.value,
             votes: opt.votes,
+            isCorrect: opt.isCorrect, // Preserve the correct answer information
           })),
           duration: updatedPoll.duration,
         };
