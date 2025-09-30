@@ -7,51 +7,10 @@ import { useContext } from "react";
 import { userContext } from "../App";
 import { socketContext } from "../App";
 import LoadingComponent from "../components/loading";
-// Example poll data
-// const mockPoll = {
-//   question: 'Which',
-//   options: [
-//     { label: 'Mars', votes: 75 },
-//     { label: 'Venus', votes: 5 },
-//     { label: 'Jupiter', votes: 5 },
-//     { label: 'Saturn', votes: 15 },
-//   ],
-// };
-const pollHistory = [
-  [
-    {
-      question: "What is the capital of France?",
-      options: [
-        { label: "Paris", votes: 80 },
-        { label: "London", votes: 10 },
-        { label: "Berlin", votes: 10 },
-      ],
-    },
-  ],
-  [
-    {
-      question: "What is 2 + 2?",
-      options: [
-        { label: "4", votes: 90 },
-        { label: "3", votes: 5 },
-        { label: "5", votes: 5 },
-      ],
-    },
-  ],
-  [
-    {
-      question: "What is the largest ocean on Earth?",
-      options: [
-        { label: "Pacific Ocean", votes: 70 },
-        { label: "Atlantic Ocean", votes: 20 },
-        { label: "Indian Ocean", votes: 10 },
-      ],
-    },
-  ],
-];
 
 export default function QuestionPollPage() {
   const [showHistory, setShowHistory] = useState(false);
+  const [pollHistory, setPollHistory] = useState([]);
   const [timer, setTimer] = useState(0); // Will be synced with backend
   const [isPollActive, setIsPollActive] = useState(false);
   const [questionId, setQuestionId] = useState(""); // Track current question for vote reset
@@ -85,6 +44,41 @@ export default function QuestionPollPage() {
       }
     };
   }, [isPollActive, mockPoll.question]);
+
+  // Function to fetch poll history from backend
+  const fetchPollHistory = async () => {
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const response = await fetch(`${API_URL}/api/polls/history`);
+      if (response.ok) {
+        const result = await response.json();
+        
+        // Handle the backend response structure: { success: true, data: [...], message: "..." }
+        if (result.success && result.data) {
+          const historyData = result.data;
+          
+          // Transform the data to match expected format
+          const transformedHistory = historyData.map((poll: any) => ({
+            question: poll.question,
+            options: poll.options.map((opt: any) => ({ 
+              label: opt.optionText, // Backend uses 'optionText', frontend expects 'label'
+              votes: opt.votes 
+            })),
+            totalVotes: poll.options.reduce((sum: number, opt: any) => sum + opt.votes, 0),
+            createdAt: poll.createdAt
+          }));
+          setPollHistory(transformedHistory.reverse().splice(0, 5)); // Keep only last 5 polls
+          console.log('Poll history fetched:', transformedHistory);
+        } else {
+          console.error('Backend returned error:', result.message);
+        }
+      } else {
+        console.error('Failed to fetch poll history - HTTP status:', response.status);
+      }
+    } catch (error) {
+      console.error('Error fetching poll history:', error);
+    }
+  };
 
   useEffect(() => {
     // Join room based on user role
@@ -183,7 +177,7 @@ export default function QuestionPollPage() {
       {/* Poll Header and History (for teachers) */}
 
       {/* Poll box */}
-      {mockPoll.question ? (
+      {(mockPoll.question) ?  (
         <div>
           <div className="w-full max-w-xl flex flex-col items-start">
             <div className="flex items-center w-full justify-between mb-6">
@@ -191,7 +185,12 @@ export default function QuestionPollPage() {
               {userRole === "teacher" && (
                 <button
                   className="text-violet-700 underline font-medium text-sm hover:text-violet-900"
-                  onClick={() => setShowHistory((h) => !h)}
+                  onClick={() => {
+                    if (!showHistory) {
+                      fetchPollHistory();
+                    }
+                    setShowHistory(h => !h);
+                  }}
                 >
                   {showHistory ? "Hide Poll History" : "View Poll History"}
                 </button>
@@ -211,19 +210,30 @@ export default function QuestionPollPage() {
                 </div>
               )}
             </div>
-            {/* History Modal/Section */}
-            {showHistory && userRole === "teacher" && (
-              <div className="w-full mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
-                {pollHistory.map((pollArr, idx) => (
+        {/* History Modal/Section */}
+        {showHistory && userRole === "teacher" && (
+          <div className="w-full mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
+            {pollHistory.length === 0 ? (
+              <div className="text-center text-gray-500 py-4">
+                No poll history available yet.
+              </div>
+            ) : (
+              pollHistory.map((poll: any, idx: number) => (
+                <div key={idx} className="mb-4 last:mb-0">
                   <Question
-                    mockPoll={pollArr[0]}
-                    key={idx}
+                    mockPoll={poll}
                     userRole={userRole}
                     questionId={`history-${idx}`}
                   />
-                ))}
-              </div>
+                  <div className="text-xs text-gray-400 mt-2 ml-2">
+                    Total votes: {poll.totalVotes} | Created:{" "}
+                    {new Date(poll.createdAt).toLocaleString()}
+                  </div>
+                </div>
+              ))
             )}
+          </div>
+        )}
           </div>
 
           <Question

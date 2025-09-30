@@ -18,6 +18,9 @@ export default function PollCreator() {
 
   useEffect(() => {
     // Join teacher room when component mounts
+    if(userRole==='student'){
+        navigate('/');
+    }
     socket.emit('joinRoom', { role: userRole });
   }, [socket, userRole]);
   // Option update handlers

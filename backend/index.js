@@ -1,13 +1,19 @@
 import express from 'express';
 import http from 'http';
+import connectDB from './db/config/dbconnect.js';
 import { Server } from 'socket.io';
 import dotenv from 'dotenv';
+import { savePollToHistory } from './db/actions/dbactions.js';
+import Poll from './db/models/pollModel.js';
 dotenv.config();
 import cors from 'cors';    
 const app = express();
 const server = http.createServer(app);
 
+connectDB();
 
+// Middleware
+app.use(express.json());
 
 const allowedOrigins = [
   'https://real-time-polling-system-kappa.vercel.app',
@@ -34,6 +40,25 @@ const io = new Server(server, {
   }
 });
 
+// API endpoint to get poll history
+app.get('/api/polls/history', async (req, res) => {
+    try {
+        const polls = await Poll.find().sort({ createdAt: -1 }).limit(50);
+        res.json({
+            success: true,
+            data: polls,
+            message: 'Poll history retrieved successfully'
+        });
+    } catch (error) {
+        console.error('Error fetching poll history:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching poll history',
+            error: error.message
+        });
+    }
+});
+
 server.listen(process.env.PORT || 3000, () => {
   console.log('Server is running on port ' + (process.env.PORT || 3000));
 });
@@ -43,6 +68,9 @@ let newQuestion=[]
 let pollTimer = null;
 let remainingTime = 0;
 let isPollActive = false;
+
+// Chat messages storage (in-memory for now)
+const chatMessages = [];
 
 function startPollTimer(duration) {
     // Clear any existing timer
@@ -68,6 +96,18 @@ function startPollTimer(duration) {
             pollTimer = null;
             isPollActive = false;
             console.log('Poll timer finished');
+            
+            // Save poll to database before broadcasting poll ended
+            if (newQuestion && newQuestion.question) {
+                savePollToHistory(newQuestion)
+                    .then(() => {
+                        console.log('Poll successfully saved to history');
+                    })
+                    .catch((error) => {
+                        console.error('Failed to save poll to history:', error);
+                    });
+            }
+            
             io.emit('pollEnded');
             io.emit('timerUpdate', { remainingTime: 0, isPollActive: false });
         }
@@ -82,6 +122,9 @@ function stopPollTimer() {
         isPollActive = false;
     }
 }
+
+// Function to save completed poll to database
+
 
 io.on('connection', (socket) => {
   console.log('A client has connected');
@@ -105,9 +148,74 @@ io.on('connection', (socket) => {
             console.log('Sent poll ended status to newly joined client');
         }
     });
+
+    socket.on('getParticipants',(data)=>{
+        console.log('Client requesting participants list:', data);
+        socket.emit('participantsList', studentData);
+    });
+
+    // Chat functionality
+    socket.on('sendChatMessage', (messageData) => {
+        const message = {
+            id: `msg_${Date.now()}_${socket.id}`,
+            user: messageData.user,
+            userId: messageData.userId,
+            text: messageData.text,
+            timestamp: messageData.timestamp || new Date().toISOString()
+        };
+        
+        // Store message
+        chatMessages.push(message);
+        console.log('New chat message:', message);
+        
+        // Broadcast to all connected clients
+        io.emit('newChatMessage', message);
+    });
+
+    socket.on('getChatHistory', () => {
+        console.log('Client requesting chat history, sending:', chatMessages.length, 'messages');
+        socket.emit('chatHistory', chatMessages);
+    });
+
+    // Handle kick participant (teacher only)
+    socket.on('kickParticipant', (data) => {
+        const { participantId, kickedBy } = data;
+        console.log(`Kick request: ${participantId} kicked by ${kickedBy}`);
+        
+        // Find the participant to kick
+        const participantIndex = studentData.findIndex(student => student.id === participantId);
+        
+        if(participantIndex !== -1) {
+            const kickedStudent = studentData.splice(participantIndex, 1)[0];
+            console.log('Participant kicked:', kickedStudent);
+            
+            // Notify the kicked participant
+            io.to(participantId).emit('kicked', { 
+                message: 'You have been removed from the session by the teacher',
+                kickedBy: kickedBy
+            });
+            
+            // Broadcast updated participants list to all remaining clients
+            io.emit('participantsList', studentData);
+            
+            // Log for debugging
+            console.log('Remaining participants:', studentData);
+        } else {
+            console.log('Participant not found for kicking:', participantId);
+        }
+    });
+
+
+
     socket.on('registerStudent',(data)=>{
-        studentData.push(data);
-        console.log(studentData);
+        // Add socket ID to the student data
+        const studentWithId = { ...data, id: socket.id };
+        studentData.push(studentWithId);
+        console.log('Student registered:', studentWithId);
+        console.log('All participants:', studentData);
+        
+        // Broadcast updated participants list to all clients
+        io.emit('participantsList', studentData);
     })
 
     socket.on('createPoll', (data) => {
@@ -148,11 +256,15 @@ io.on('connection', (socket) => {
     });
 
   socket.on('disconnect', () => {
-    console.log('A client has disconnected',socket.id);
-        const index=studentData.findIndex(student=>student.id===socket.id);
-        if(index!==-1){
-            studentData.splice(index,1);
-            console.log(studentData);
-        }
+    console.log('A client has disconnected', socket.id);
+    const index = studentData.findIndex(student => student.id === socket.id);
+    if(index !== -1){
+        const removedStudent = studentData.splice(index, 1)[0];
+        console.log('Removed participant:', removedStudent);
+        console.log('Remaining participants:', studentData);
+        
+        // Broadcast updated participants list to all remaining clients
+        io.emit('participantsList', studentData);
+    }
   });
 });
