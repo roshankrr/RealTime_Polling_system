@@ -30,8 +30,8 @@ const StudentStarter: React.FC = () => {
         If you’re a student, you’ll be able to <span className="font-semibold text-black">submit your answers</span>, participate in live polls, and see how your responses compare with your classmates
       </p>
       {/* Name Form */}
-      <div className="w-full max-w-md flex flex-col items-center  mx-auto">
-        <div className='w-96'>
+      <div className="w-full  max-w-md flex flex-col items-center  mx-auto">
+        <div className='w-80 md:w-100'>
             <label htmlFor="student-name" className="block font-semibold text-base mb-2 text-gray-900">
           Enter your Name
         </label>
