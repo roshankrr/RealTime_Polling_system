@@ -6,9 +6,10 @@ dotenv.config();
 // import cors from 'cors';    
 const app = express();
 const server = http.createServer(app);
+
 const io = new Server(server,{
     cors: {
-      origin: process.env.CLIENT_URL,
+      origin: [process.env.CLIENT_URL, "http://localhost:5173","https://real-time-polling-system-kappa.vercel.app/"],
     //   credentials: true
     }
 });
