@@ -181,10 +181,7 @@ export default function QuestionPollPage() {
       {/* Poll Header and History (for teachers) */}
 
       {/* Poll box */}
-      {(mockPoll.question) ?  (
-        <div >
-          <div className="w-full max-w-xl flex flex-col items-start">
-            {userRole === "teacher" && (
+      {userRole === "teacher" && (
                 <button
                   className="text-white absolute top-4 right-4 bg-violet-600 px-4 py-2 rounded-full font-medium text-sm hover:bg-violet-400"
                   onClick={() => {
@@ -197,26 +194,7 @@ export default function QuestionPollPage() {
                   {showHistory ? "Hide Poll History" : "View Poll History"}
                 </button>
               )}
-            <div className="flex items-center w-full justify-between mb-6">
-                
-              <h2 className="text-2xl font-semibold">Question</h2>
-              
-              {/* {userRole === "student" && ( */}
-                <div
-                  className={`text-gray-500 flex items-center font-medium text-sm ${
-                    timer <= 15
-                      ? "text-red-500"
-                      : timer <= 0
-                      ? "text-gray-400"
-                      : ""
-                  }`}
-                >
-                  <TimerIcon className="text-md" />
-                  {timer > 0 ? `Time left: ${timer}s` : "Poll Ended"}
-                </div>
-              {/* )} */}
-            </div>
-        {/* History Modal/Section */}
+                {/* History Modal/Section */}
         {showHistory && userRole === "teacher" && (
           <div className="md:w-[30vw]  mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
             {pollHistory.length === 0 ? (
@@ -240,6 +218,30 @@ export default function QuestionPollPage() {
             )}
           </div>
         )}
+      {(mockPoll.question) ?  (
+        <div >
+          <div className="w-full max-w-xl flex flex-col items-start">
+            
+            <div className="flex items-center w-full justify-between mb-6">
+                
+              <h2 className="text-2xl font-semibold">Question</h2>
+              
+              {/* {userRole === "student" && ( */}
+                <div
+                  className={`text-gray-500 flex items-center font-medium text-sm ${
+                    timer <= 15
+                      ? "text-red-500"
+                      : timer <= 0
+                      ? "text-gray-400"
+                      : ""
+                  }`}
+                >
+                  <TimerIcon className="text-md" />
+                  {timer > 0 ? `Time left: ${timer}s` : "Poll Ended"}
+                </div>
+              {/* )} */}
+            </div>
+
           </div>
 
           <Question
